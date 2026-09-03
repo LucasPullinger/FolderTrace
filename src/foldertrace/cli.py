@@ -18,6 +18,7 @@ from foldertrace.hashing import hash_records
 from foldertrace.scanner import scan_folder
 from foldertrace.versions import possible_version_groups
 from foldertrace.database import files_for_scan
+from foldertrace.exporting import export_scan
 
 app = typer.Typer(help="Audit local file collections.", no_args_is_help=True)
 console = Console()
@@ -169,6 +170,23 @@ def versions(
         console.print(f"\n[bold]{group.base_name.title()}[/bold]")
         for file in group.files:
             console.print(file.path, soft_wrap=True)
+
+
+# Export a saved scan as a JSON manifest or CSV file inventory.
+@app.command(help="Export a saved scan to a .json or .csv file.")
+def export(
+    destination: Path = typer.Argument(..., help="Output filename ending in .json or .csv."),
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+    scan_id: int | None = typer.Option(None, "--scan-id"),
+) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    try:
+        export_scan(database, selected_scan_id, destination)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    console.print(f"Exported scan {selected_scan_id} to {destination}.")
 
 
 # Display exact duplicate files from a saved scan.
