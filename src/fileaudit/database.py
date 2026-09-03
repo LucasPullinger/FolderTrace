@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -47,6 +48,15 @@ class DuplicateGroup:
     @property
     def duplicate_size(self) -> int:
         return sum(file.size for file in self.files[1:])
+
+
+# Categorised differences between two saved scans.
+@dataclass(frozen=True, slots=True)
+class ScanChanges:
+    added: list[StoredFile]
+    removed: list[StoredFile]
+    changed: list[StoredFile]
+    unchanged: list[StoredFile]
 
 
 # Return the default on-device location for FileAudit's database.
@@ -131,6 +141,52 @@ def saved_scans(database_path: Path) -> list[Scan]:
     engine = create_database(database_path)
     with Session(engine) as session:
         return list(session.scalars(select(Scan).order_by(Scan.id.desc())))
+
+
+# Compare file paths and content between two saved scans.
+def compare_scans(database_path: Path, from_scan_id: int, to_scan_id: int) -> ScanChanges:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        from_scan = session.get(Scan, from_scan_id)
+        to_scan = session.get(Scan, to_scan_id)
+        if from_scan is None:
+            raise ValueError(f"Scan {from_scan_id} does not exist.")
+        if to_scan is None:
+            raise ValueError(f"Scan {to_scan_id} does not exist.")
+
+        from_files = list(
+            session.scalars(select(StoredFile).where(StoredFile.scan_id == from_scan_id))
+        )
+        to_files = list(
+            session.scalars(select(StoredFile).where(StoredFile.scan_id == to_scan_id))
+        )
+
+    from_by_path = {file.path: file for file in from_files}
+    to_by_path = {file.path: file for file in to_files}
+    added = [file for path, file in to_by_path.items() if path not in from_by_path]
+    removed = [file for path, file in from_by_path.items() if path not in to_by_path]
+    changed: list[StoredFile] = []
+    unchanged: list[StoredFile] = []
+
+    for path in from_by_path.keys() & to_by_path.keys():
+        if _files_match(from_by_path[path], to_by_path[path]):
+            unchanged.append(to_by_path[path])
+        else:
+            changed.append(to_by_path[path])
+
+    return ScanChanges(
+        added=sorted(added, key=lambda file: file.path),
+        removed=sorted(removed, key=lambda file: file.path),
+        changed=sorted(changed, key=lambda file: file.path),
+        unchanged=sorted(unchanged, key=lambda file: file.path),
+    )
+
+
+# Compare SHA-256 hashes when available, with metadata support for legacy scans.
+def _files_match(first: StoredFile, second: StoredFile) -> bool:
+    if first.sha256 is not None and second.sha256 is not None:
+        return first.sha256 == second.sha256
+    return first.size == second.size and first.modified_at == second.modified_at
 
 
 # Return exact duplicate groups for one scan, based on matching SHA-256 hashes.

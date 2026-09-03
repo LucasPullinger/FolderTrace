@@ -3,6 +3,9 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from fileaudit.cli import app
+from fileaudit.database import save_scan
+from fileaudit.hashing import hash_records
+from fileaudit.scanner import scan_folder
 
 
 runner = CliRunner()
@@ -46,3 +49,33 @@ def test_scans_command_lists_saved_scans(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert "Saved scans" in result.stdout
     assert "Folder" in result.stdout
+
+
+def test_changes_command_prints_summary_and_details(tmp_path: Path) -> None:
+    source_folder = tmp_path / "source"
+    source_folder.mkdir()
+    (source_folder / "removed.txt").write_text("old")
+    database = tmp_path / "fileaudit.db"
+    first_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+    (source_folder / "removed.txt").unlink()
+    (source_folder / "added.txt").write_text("new")
+    second_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+
+    result = runner.invoke(
+        app,
+        [
+            "changes",
+            "--from",
+            str(first_scan_id),
+            "--to",
+            str(second_scan_id),
+            "--details",
+            "--database",
+            str(database),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Scan changes" in result.stdout
+    assert "added.txt" in result.stdout
+    assert "removed.txt" in result.stdout

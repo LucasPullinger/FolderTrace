@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.table import Table
 
 from fileaudit.database import (
+    compare_scans,
     default_database_path,
     duplicate_groups,
     latest_scan_id,
@@ -57,6 +58,40 @@ def scan(
     table.add_row("Total size", _format_size(total_size))
     table.add_row("Database", str(database.expanduser()))
     console.print(table)
+
+
+# Compare two saved scans and summarise their differences.
+@app.command(help="Compare two saved scans.")
+def changes(
+    from_scan: int = typer.Option(..., "--from", help="Earlier scan ID."),
+    to_scan: int = typer.Option(..., "--to", help="Later scan ID."),
+    details: bool = typer.Option(False, "--details", help="List paths in each category."),
+    database: Path = typer.Option(
+        default_database_path(),
+        "--database",
+        "-d",
+        help="SQLite database file to query.",
+    ),
+) -> None:
+    try:
+        comparison = compare_scans(database, from_scan, to_scan)
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+
+    console.print(f"[bold]Scan changes: {from_scan} → {to_scan}[/bold]")
+    table = Table(show_header=False)
+    table.add_column("Category", style="bold cyan")
+    table.add_column("Files", justify="right")
+    table.add_row("Added", str(len(comparison.added)))
+    table.add_row("Removed", str(len(comparison.removed)))
+    table.add_row("Changed", str(len(comparison.changed)))
+    table.add_row("Unchanged", str(len(comparison.unchanged)))
+    console.print(table)
+
+    if details:
+        _print_change_paths("Added", comparison.added)
+        _print_change_paths("Removed", comparison.removed)
+        _print_change_paths("Changed", comparison.changed)
 
 
 # List saved scans with their IDs, timestamps, and root folders.
@@ -139,6 +174,15 @@ def _format_datetime(value: datetime | None) -> str:
     if value is None:
         return "In progress"
     return value.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+# Print the paths in one comparison category.
+def _print_change_paths(label: str, files: list[object]) -> None:
+    if not files:
+        return
+    console.print(f"\n[bold]{label}[/bold]")
+    for file in files:
+        console.print(file.path)
 
 
 if __name__ == "__main__":

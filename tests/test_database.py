@@ -2,6 +2,7 @@ from pathlib import Path
 import sqlite3
 
 from fileaudit.database import (
+    compare_scans,
     create_database,
     duplicate_groups,
     files_for_scan,
@@ -91,3 +92,25 @@ def test_saved_scans_returns_newest_scan_first(tmp_path: Path) -> None:
     assert [scan.id for scan in scans] == [second_scan_id, first_scan_id]
     assert scans[0].root_path == str(source_folder)
     assert scans[0].completed_at is not None
+
+
+def test_compare_scans_categorises_file_changes(tmp_path: Path) -> None:
+    source_folder = tmp_path / "source"
+    source_folder.mkdir()
+    (source_folder / "unchanged.txt").write_text("same")
+    changed_file = source_folder / "changed.txt"
+    changed_file.write_text("before")
+    (source_folder / "removed.txt").write_text("remove me")
+    database = tmp_path / "fileaudit.db"
+    first_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+
+    changed_file.write_text("after")
+    (source_folder / "removed.txt").unlink()
+    (source_folder / "added.txt").write_text("new")
+    second_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+
+    comparison = compare_scans(database, first_scan_id, second_scan_id)
+    assert [file.name for file in comparison.added] == ["added.txt"]
+    assert [file.name for file in comparison.removed] == ["removed.txt"]
+    assert [file.name for file in comparison.changed] == ["changed.txt"]
+    assert [file.name for file in comparison.unchanged] == ["unchanged.txt"]
