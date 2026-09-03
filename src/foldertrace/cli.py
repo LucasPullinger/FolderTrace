@@ -16,6 +16,8 @@ from foldertrace.database import (
 )
 from foldertrace.hashing import hash_records
 from foldertrace.scanner import scan_folder
+from foldertrace.versions import possible_version_groups
+from foldertrace.database import files_for_scan
 
 app = typer.Typer(help="Audit local file collections.", no_args_is_help=True)
 console = Console()
@@ -147,6 +149,26 @@ def archives(
     for file, archive in rows:
         table.add_row(file.path, archive.archive_type, str(archive.file_count), _format_size(archive.uncompressed_size), archive.error or "OK")
     console.print(table)
+
+
+# List filenames that are possibly different versions of the same item.
+@app.command(help="Show possible filename-based version groups.")
+def versions(
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+    scan_id: int | None = typer.Option(None, "--scan-id"),
+) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    groups = possible_version_groups(files_for_scan(database, selected_scan_id))
+    if not groups:
+        console.print(f"No possible version groups found in scan {selected_scan_id}.")
+        return
+    console.print(f"[bold]Possible version groups: scan {selected_scan_id}[/bold]")
+    for group in groups:
+        console.print(f"\n[bold]{group.base_name.title()}[/bold]")
+        for file in group.files:
+            console.print(file.path, soft_wrap=True)
 
 
 # Display exact duplicate files from a saved scan.
