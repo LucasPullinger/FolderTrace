@@ -2,7 +2,7 @@ from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
 
-from fileaudit.scanner import FileRecord
+from foldertrace.scanner import FileRecord
 
 CHUNK_SIZE = 1024 * 1024
 

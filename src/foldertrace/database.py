@@ -9,8 +9,8 @@ from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, ins
 from sqlalchemy.engine import Engine, URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-from fileaudit.scanner import FileRecord
-from fileaudit.archives import inspect_archive
+from foldertrace.scanner import FileRecord
+from foldertrace.archives import inspect_archive
 
 
 class Base(DeclarativeBase):
@@ -73,12 +73,12 @@ class ScanChanges:
     unchanged: list[StoredFile]
 
 
-# Return the default on-device location for FileAudit's database.
+# Return the default on-device location for FolderTrace's database.
 def default_database_path() -> Path:
-    return Path.home() / ".local" / "share" / "fileaudit" / "fileaudit.db"
+    return Path.home() / ".local" / "share" / "foldertrace" / "foldertrace.db"
 
 
-# Create the SQLite engine and ensure FileAudit's tables exist.
+# Create the SQLite engine and ensure FolderTrace's tables exist.
 def create_database(database_path: Path) -> Engine:
     path = database_path.expanduser().resolve()
     path.parent.mkdir(parents=True, exist_ok=True)

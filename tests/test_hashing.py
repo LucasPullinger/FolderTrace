@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from fileaudit.hashing import hash_file, hash_records
-from fileaudit.scanner import scan_folder
+from foldertrace.hashing import hash_file, hash_records
+from foldertrace.scanner import scan_folder
 
 
 def test_hash_file_returns_a_sha256_digest(tmp_path: Path) -> None:

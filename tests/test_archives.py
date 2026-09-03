@@ -1,7 +1,7 @@
 from pathlib import Path
 import zipfile
 
-from fileaudit.archives import inspect_archive
+from foldertrace.archives import inspect_archive
 
 
 def test_inspect_archive_reads_zip_metadata(tmp_path: Path) -> None:

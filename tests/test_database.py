@@ -1,7 +1,7 @@
 from pathlib import Path
 import sqlite3
 
-from fileaudit.database import (
+from foldertrace.database import (
     compare_scans,
     create_database,
     duplicate_groups,
@@ -9,15 +9,15 @@ from fileaudit.database import (
     save_scan,
     saved_scans,
 )
-from fileaudit.hashing import hash_records
-from fileaudit.scanner import scan_folder
+from foldertrace.hashing import hash_records
+from foldertrace.scanner import scan_folder
 
 
 def test_save_scan_persists_file_records(tmp_path: Path) -> None:
     source_folder = tmp_path / "source"
     source_folder.mkdir()
     (source_folder / "report.txt").write_text("audit")
-    database = tmp_path / "data" / "fileaudit.db"
+    database = tmp_path / "data" / "foldertrace.db"
 
     scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
 
@@ -38,7 +38,7 @@ def test_duplicate_groups_returns_matching_file_hashes(tmp_path: Path) -> None:
     (source_folder / "first.txt").write_text("same content")
     (source_folder / "second.txt").write_text("same content")
     (source_folder / "other.txt").write_text("different content")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
 
     scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
 
@@ -83,7 +83,7 @@ def test_saved_scans_returns_newest_scan_first(tmp_path: Path) -> None:
     source_folder = tmp_path / "source"
     source_folder.mkdir()
     (source_folder / "report.txt").write_text("audit")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
 
     first_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
     second_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
@@ -101,7 +101,7 @@ def test_compare_scans_categorises_file_changes(tmp_path: Path) -> None:
     changed_file = source_folder / "changed.txt"
     changed_file.write_text("before")
     (source_folder / "removed.txt").write_text("remove me")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
     first_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
 
     changed_file.write_text("after")

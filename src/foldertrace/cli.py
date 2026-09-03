@@ -5,7 +5,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from fileaudit.database import (
+from foldertrace.database import (
     archives_for_scan,
     compare_scans,
     default_database_path,
@@ -14,14 +14,14 @@ from fileaudit.database import (
     save_scan,
     saved_scans,
 )
-from fileaudit.hashing import hash_records
-from fileaudit.scanner import scan_folder
+from foldertrace.hashing import hash_records
+from foldertrace.scanner import scan_folder
 
 app = typer.Typer(help="Audit local file collections.", no_args_is_help=True)
 console = Console()
 
 
-# Run FileAudit commands.
+# Run FolderTrace commands.
 @app.callback()
 def main() -> None:
     pass

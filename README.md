@@ -1,6 +1,6 @@
-# FileAudit
+# FolderTrace
 
-FileAudit is a local-first application for scanning folders and building a structured, persistent inventory of their contents.
+FolderTrace is a local-first application for scanning folders and building a structured, persistent inventory of their contents.
 
 It helps answer practical questions about large file collections:
 
@@ -10,11 +10,11 @@ It helps answer practical questions about large file collections:
 - What has changed since a previous scan?
 - Can I recreate or verify this collection later?
 
-FileAudit is designed for general-purpose collections such as downloads, project archives, photo backups, and datasets. Mod folders are a useful example, but not the product's primary focus.
+FolderTrace is designed for general-purpose collections such as downloads, project archives, photo backups, and datasets. Mod folders are a useful example, but not the product's primary focus.
 
 ## How it works
 
-FileAudit recursively scans a selected directory, collects metadata for every file, calculates SHA-256 hashes, optionally inspects supported archives, and stores the resulting manifest locally. It then analyses that manifest to surface duplicates and changes over time.
+FolderTrace recursively scans a selected directory, collects metadata for every file, calculates SHA-256 hashes, optionally inspects supported archives, and stores the resulting manifest locally. It then analyses that manifest to surface duplicates and changes over time.
 
 ```text
 Select folder
@@ -59,7 +59,7 @@ Archive records can include the number of contained files, total uncompressed si
 
 ## Exact duplicates vs. possible versions
 
-FileAudit keeps these concepts deliberately separate.
+FolderTrace keeps these concepts deliberately separate.
 
 | Finding                | Meaning                                                                             | Confidence   |
 | ---------------------- | ----------------------------------------------------------------------------------- | ------------ |
@@ -73,12 +73,12 @@ Version grouping is a future feature and must never be presented as equivalent t
 The application will begin as a CLI. Intended commands include:
 
 ```bash
-fileaudit scan ~/Downloads
-fileaudit summary
-fileaudit duplicates
-fileaudit archives
-fileaudit changes
-fileaudit export manifest.json
+foldertrace scan ~/Downloads
+foldertrace summary
+foldertrace duplicates
+foldertrace archives
+foldertrace changes
+foldertrace export manifest.json
 ```
 
 An example scan summary:
@@ -119,7 +119,7 @@ Python
 - **SQLAlchemy** — Python database models and schema creation for the `scans` and `files` tables.
 - **pytest** — automated scanner, CLI, hashing, and database tests.
 
-`hashlib` provides SHA-256 hashing. Planned standard-library integrations include `zipfile` and `tarfile` for archive inspection. FileAudit runs entirely locally and does not require cloud services.
+`hashlib` provides SHA-256 hashing. Planned standard-library integrations include `zipfile` and `tarfile` for archive inspection. FolderTrace runs entirely locally and does not require cloud services.
 
 ## Roadmap
 
@@ -136,6 +136,6 @@ Python
 
 ## Non-goals
 
-FileAudit is not a file manager, backup program, antivirus product, cloud storage system, archive replacement, or mod manager. It analyses and records a collection so that it can be understood, verified, and compared over time.
+FolderTrace is not a file manager, backup program, antivirus product, cloud storage system, archive replacement, or mod manager. It analyses and records a collection so that it can be understood, verified, and compared over time.
 
-> Point FileAudit at a directory. It creates a persistent inventory of the files, detects exact duplicates, and tells you what changed between scans.
+> Point FolderTrace at a directory. It creates a persistent inventory of the files, detects exact duplicates, and tells you what changed between scans.

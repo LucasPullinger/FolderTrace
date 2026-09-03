@@ -2,10 +2,10 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from fileaudit.cli import app
-from fileaudit.database import save_scan
-from fileaudit.hashing import hash_records
-from fileaudit.scanner import scan_folder
+from foldertrace.cli import app
+from foldertrace.database import save_scan
+from foldertrace.hashing import hash_records
+from foldertrace.scanner import scan_folder
 
 
 runner = CliRunner()
@@ -13,7 +13,7 @@ runner = CliRunner()
 
 def test_scan_command_prints_a_summary(tmp_path: Path) -> None:
     (tmp_path / "report.txt").write_text("audit")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
 
     result = runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
 
@@ -28,7 +28,7 @@ def test_scan_command_prints_a_summary(tmp_path: Path) -> None:
 def test_duplicates_command_prints_matching_files(tmp_path: Path) -> None:
     (tmp_path / "first.txt").write_text("same")
     (tmp_path / "second.txt").write_text("same")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
     runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
 
     result = runner.invoke(app, ["duplicates", "--database", str(database)])
@@ -41,7 +41,7 @@ def test_duplicates_command_prints_matching_files(tmp_path: Path) -> None:
 
 def test_scans_command_lists_saved_scans(tmp_path: Path) -> None:
     (tmp_path / "report.txt").write_text("audit")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
     runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
 
     result = runner.invoke(app, ["scans", "--database", str(database)])
@@ -55,7 +55,7 @@ def test_changes_command_prints_summary_and_details(tmp_path: Path) -> None:
     source_folder = tmp_path / "source"
     source_folder.mkdir()
     (source_folder / "removed.txt").write_text("old")
-    database = tmp_path / "fileaudit.db"
+    database = tmp_path / "foldertrace.db"
     first_scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
     (source_folder / "removed.txt").unlink()
     (source_folder / "added.txt").write_text("new")

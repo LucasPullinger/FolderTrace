@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from fileaudit.scanner import scan_folder
+from foldertrace.scanner import scan_folder
 
 
 def test_scan_folder_recursively_collects_file_metadata(tmp_path: Path) -> None:
