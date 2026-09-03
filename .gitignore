@@ -1,0 +1,37 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test, type-checking, linting, and coverage output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Local FileAudit data and exported manifests
+*.db
+*.sqlite
+*.sqlite3
+manifests/
+exports/
+
+# Environment and editor files
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
