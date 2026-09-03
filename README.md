@@ -12,6 +12,22 @@ It helps answer practical questions about large file collections:
 
 FolderTrace is designed for general-purpose collections such as downloads, project archives, photo backups, and datasets. Mod folders are a useful example, but not the product's primary focus.
 
+## Install
+
+FolderTrace requires Python 3.11 or later. Install from a local clone:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install .
+```
+
+For development, including tests:
+
+```bash
+pip install -e ".[test]"
+```
+
 ## How it works
 
 FolderTrace recursively scans a selected directory, collects metadata for every file, calculates SHA-256 hashes, optionally inspects supported archives, and stores the resulting manifest locally. It then analyses that manifest to surface duplicates and changes over time.
@@ -44,9 +60,9 @@ A file record may contain information like this:
 }
 ```
 
-## Planned MVP
+## Features
 
-The first version focuses on a small, reliable auditing workflow:
+The first release provides a small, reliable auditing workflow:
 
 1. Recursively scan a folder and record each file's path, name, extension, size, and modification date.
 2. Calculate SHA-256 hashes.
@@ -70,31 +86,27 @@ Version grouping is a future feature and must never be presented as equivalent t
 
 ## Command-line interface
 
-The application will begin as a CLI. Intended commands include:
+The application is a CLI:
 
 ```bash
 foldertrace scan ~/Downloads
-foldertrace summary
+foldertrace scans
 foldertrace duplicates
 foldertrace archives
-foldertrace changes
-foldertrace export manifest.json
+foldertrace changes --from 1 --to 2
 ```
 
-An example scan summary:
+Each scan is stored in SQLite at `~/.local/share/foldertrace/foldertrace.db` by default. Use `foldertrace --help` for the complete command reference.
+
+An example comparison:
 
 ```text
-Scanning ~/Downloads...
+Scan changes: 1 → 2
 
-Files:              284
-Archives:            61
-Total size:        14.8 GB
-
-Exact duplicates:    12
-Duplicate space:    2.3 GB
-
-Possible version groups: 7
-Archives with errors: 2
+Added:       12
+Removed:      4
+Changed:      7
+Unchanged:  261
 ```
 
 ## Proposed architecture
@@ -123,19 +135,17 @@ Python
 
 ## Roadmap
 
-1. Scan files and print metadata.
-2. Calculate SHA-256 hashes.
-3. Detect duplicate files.
-4. Store scans in SQLite.
-5. Compare scans.
-6. Inspect archive contents.
-7. Detect possible version groups.
-8. Export manifests as JSON or CSV.
-9. Optionally add a GUI.
-10. Optionally add specialised plugins, such as a Nexus Mods integration.
+1. Detect possible version groups.
+2. Export manifests as JSON or CSV.
+3. Optionally add a GUI.
+4. Optionally add specialised plugins, such as a Nexus Mods integration.
 
 ## Non-goals
 
 FolderTrace is not a file manager, backup program, antivirus product, cloud storage system, archive replacement, or mod manager. It analyses and records a collection so that it can be understood, verified, and compared over time.
 
 > Point FolderTrace at a directory. It creates a persistent inventory of the files, detects exact duplicates, and tells you what changed between scans.
+
+## License
+
+FolderTrace is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE).

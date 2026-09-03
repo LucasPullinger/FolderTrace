@@ -7,12 +7,16 @@ name = "foldertrace"
 version = "0.1.0"
 description = "A local-first file collection auditing tool."
 readme = "README.md"
+license = "GPL-3.0-or-later"
 requires-python = ">=3.11"
 dependencies = [
     "rich>=13",
     "sqlalchemy>=2.0",
     "typer>=0.12",
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
 
 [project.scripts]
 foldertrace = "foldertrace.cli:app"

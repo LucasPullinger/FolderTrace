@@ -22,7 +22,7 @@ build/
 dist/
 *.egg-info/
 
-# Local FileAudit data and exported manifests
+# Local FolderTrace data and exported manifests
 *.db
 *.sqlite
 *.sqlite3
