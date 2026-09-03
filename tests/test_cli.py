@@ -51,6 +51,18 @@ def test_scans_command_lists_saved_scans(tmp_path: Path) -> None:
     assert "Folder" in result.stdout
 
 
+def test_summary_command_prints_scan_overview(tmp_path: Path) -> None:
+    (tmp_path / "report.txt").write_text("audit")
+    database = tmp_path / "foldertrace.db"
+    runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
+
+    result = runner.invoke(app, ["summary", "--database", str(database)])
+
+    assert result.exit_code == 0
+    assert "Scan summary" in result.stdout
+    assert "Duplicate groups" in result.stdout
+
+
 def test_changes_command_prints_summary_and_details(tmp_path: Path) -> None:
     source_folder = tmp_path / "source"
     source_folder.mkdir()

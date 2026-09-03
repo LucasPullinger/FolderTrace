@@ -143,6 +143,33 @@ def scans(
 
 
 # List inspected archives from the latest or selected scan.
+@app.command(help="Show a one-screen summary of the latest or selected scan.")
+def summary(
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+    scan_id: int | None = typer.Option(None, "--scan-id"),
+) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    scan_record = next(scan for scan in saved_scans(database) if scan.id == selected_scan_id)
+    files = files_for_scan(database, selected_scan_id)
+    archive_rows = archives_for_scan(database, selected_scan_id)
+    duplicates = duplicate_groups(database, selected_scan_id)
+    versions = possible_version_groups(files)
+    table = Table(title=f"Scan summary: {selected_scan_id}", show_header=False)
+    table.add_column("Metric", style="bold cyan")
+    table.add_column("Value")
+    table.add_row("Folder", scan_record.root_path)
+    table.add_row("Files", str(len(files)))
+    table.add_row("Total size", _format_size(sum(file.size for file in files)))
+    table.add_row("Archives", str(len(archive_rows)))
+    table.add_row("Duplicate groups", str(len(duplicates)))
+    table.add_row("Duplicate space", _format_size(sum(group.duplicate_size for group in duplicates)))
+    table.add_row("Possible version groups", str(len(versions)))
+    console.print(table)
+
+
+# List inspected archives from the latest or selected scan.
 @app.command(help="List inspected archives from the latest or selected scan.")
 def archives(
     database: Path = typer.Option(default_database_path(), "--database", "-d"),
