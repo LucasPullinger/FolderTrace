@@ -27,7 +27,7 @@ def possible_version_groups(files: list[NamedFile]) -> list[VersionGroup]:
     return [
         VersionGroup(base_name, sorted(group, key=lambda file: file.path))
         for base_name, group in sorted(groups.items())
-        if len(group) > 1
+        if len(group) > 1 and any(has_release_marker(file.name) for file in group)
     ]
 
 
@@ -45,3 +45,12 @@ def normalise_filename(filename: str) -> str:
     name = re.sub(r"\b\d{4}[-_.]\d{1,2}[-_.]\d{1,2}\b", " ", name)
     name = re.sub(r"\b(?:final|latest|copy|backup|old|new)\b", " ", name)
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", name)).strip()
+
+
+# Identify common version-number and release-date patterns in a filename.
+def has_release_marker(filename: str) -> bool:
+    name = filename.casefold().replace("_", " ")
+    return bool(
+        re.search(r"\b(?:v|ver|version)?\s*\d+(?:[._-]\d+){1,3}\b", name)
+        or re.search(r"\b\d{4}[-_.]\d{1,2}[-_.]\d{1,2}\b", name)
+    )

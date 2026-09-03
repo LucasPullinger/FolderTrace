@@ -18,6 +18,8 @@ def test_possible_version_groups_only_returns_related_names() -> None:
     files = [
         ExampleFile("SkyUI_v5.1.zip", "/files/skyui-1"),
         ExampleFile("SkyUI_v5.2.zip", "/files/skyui-2"),
+        ExampleFile("manifest.json", "/files/one/manifest.json"),
+        ExampleFile("manifest.json", "/files/two/manifest.json"),
         ExampleFile("unrelated.zip", "/files/unrelated"),
     ]
 
