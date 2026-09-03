@@ -1,5 +1,7 @@
 # FolderTrace
 
+[![PyPI version](https://img.shields.io/pypi/v/foldertrace.svg)](https://pypi.org/project/foldertrace/)
+
 FolderTrace is a local-first application for scanning folders and building a structured, persistent inventory of their contents.
 
 Point FolderTrace at a directory. It creates a persistent inventory of the files, detects exact duplicates, and tells you what changed between scans.
