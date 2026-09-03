@@ -13,6 +13,7 @@ class FileRecord:
     extension: str
     size: int
     modified_at: datetime
+    sha256: str | None = None
 
 
 # Recursively return metadata for regular files within 'folder'.

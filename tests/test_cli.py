@@ -20,3 +20,17 @@ def test_scan_command_prints_a_summary(tmp_path: Path) -> None:
     assert "1" in result.stdout
     assert "5 B" in result.stdout
     assert database.exists()
+
+
+def test_duplicates_command_prints_matching_files(tmp_path: Path) -> None:
+    (tmp_path / "first.txt").write_text("same")
+    (tmp_path / "second.txt").write_text("same")
+    database = tmp_path / "fileaudit.db"
+    runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
+
+    result = runner.invoke(app, ["duplicates", "--database", str(database)])
+
+    assert result.exit_code == 0
+    assert "Exact duplicates" in result.stdout
+    assert "first.txt" in result.stdout
+    assert "second.txt" in result.stdout

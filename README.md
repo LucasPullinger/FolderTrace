@@ -117,9 +117,9 @@ Python
 - **Rich** — readable terminal tables and scan summaries.
 - **SQLite** — local, serverless storage for persistent scan manifests.
 - **SQLAlchemy** — Python database models and schema creation for the `scans` and `files` tables.
-- **pytest** — automated scanner, CLI, and database tests.
+- **pytest** — automated scanner, CLI, hashing, and database tests.
 
-Planned standard-library integrations include `hashlib` for SHA-256 hashing and `zipfile`/`tarfile` for archive inspection. FileAudit runs entirely locally and does not require cloud services.
+`hashlib` provides SHA-256 hashing. Planned standard-library integrations include `zipfile` and `tarfile` for archive inspection. FileAudit runs entirely locally and does not require cloud services.
 
 ## Roadmap
 
