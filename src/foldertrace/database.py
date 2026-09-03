@@ -164,6 +164,16 @@ def latest_scan_id(database_path: Path) -> int | None:
         )
 
 
+# Return latest saved file records for a particular root folder.
+def latest_files_for_root(database_path: Path, root_path: Path) -> dict[str, StoredFile]:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        scan_id = session.scalar(select(Scan.id).where(Scan.root_path == str(root_path.expanduser().resolve())).order_by(Scan.id.desc()))
+        if scan_id is None:
+            return {}
+        return {file.path: file for file in session.scalars(select(StoredFile).where(StoredFile.scan_id == scan_id))}
+
+
 # Return saved scans from newest to oldest.
 def saved_scans(database_path: Path) -> list[Scan]:
     engine = create_database(database_path)

@@ -11,10 +11,11 @@ from foldertrace.database import (
     default_database_path,
     duplicate_groups,
     latest_scan_id,
+    latest_files_for_root,
     save_scan,
     saved_scans,
 )
-from foldertrace.hashing import hash_records
+from foldertrace.hashing import hash_records_incrementally
 from foldertrace.scanner import scan_folder
 from foldertrace.versions import possible_version_groups
 from foldertrace.database import files_for_scan
@@ -49,7 +50,8 @@ def scan(
         help="SQLite database file used to store the scan.",
     ),
 ) -> None:
-    records = hash_records(scan_folder(folder))
+    hashing = hash_records_incrementally(scan_folder(folder), latest_files_for_root(database, folder))
+    records = hashing.records
     total_size = sum(record.size for record in records)
     scan_id = save_scan(database, folder, records)
 
@@ -59,6 +61,8 @@ def scan(
     table.add_row("Scan ID", str(scan_id))
     table.add_row("Scanned", str(folder))
     table.add_row("Files", str(len(records)))
+    table.add_row("Hashes reused", str(hashing.reused))
+    table.add_row("Hashes calculated", str(hashing.calculated))
     table.add_row("Total size", _format_size(total_size))
     table.add_row("Database", str(database.expanduser()))
     console.print(table)
