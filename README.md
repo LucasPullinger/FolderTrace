@@ -130,6 +130,7 @@ foldertrace archives
 foldertrace versions
 foldertrace changes --from 1 --to 2
 foldertrace export manifest.json
+foldertrace cleanup --keep-latest 3 --yes
 ```
 
 Each scan is stored in SQLite at `~/.local/share/foldertrace/foldertrace.db` by default. Use `foldertrace --help` for the complete command reference.
@@ -150,6 +151,21 @@ node_modules/*
 ```
 
 Repeated scans reuse SHA-256 hashes for files whose path, size, and modification time are unchanged. FolderTrace displays progress and reports reused versus newly calculated hashes.
+
+### Remove saved scans
+
+`cleanup` removes scan records from FolderTrace's local database only; it never deletes files from the scanned folder. The `--yes` confirmation flag is required.
+
+```bash
+# Delete one saved scan.
+foldertrace cleanup --scan-id 1 --yes
+
+# Keep the latest three scans and delete older saved scans.
+foldertrace cleanup --keep-latest 3 --yes
+
+# Delete every saved scan from FolderTrace's database.
+foldertrace cleanall --yes
+```
 
 An example comparison:
 

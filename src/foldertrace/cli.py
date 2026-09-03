@@ -11,6 +11,7 @@ from foldertrace.database import (
     compare_scans,
     default_database_path,
     duplicate_groups,
+    delete_scans,
     latest_scan_id,
     latest_files_for_root,
     save_scan,
@@ -233,6 +234,37 @@ def export(
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     console.print(f"Exported scan {selected_scan_id} to {destination}.")
+
+
+# Delete saved scan records without deleting any files on disk.
+@app.command(help="Delete saved scans from FolderTrace's database.")
+def cleanup(
+    scan_id: list[int] = typer.Option([], "--scan-id", help="Scan ID to delete; may be repeated."),
+    keep_latest: int | None = typer.Option(None, "--keep-latest", min=0, help="Keep this many newest scans and delete older ones."),
+    yes: bool = typer.Option(False, "--yes", help="Confirm deletion of saved scan data."),
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+) -> None:
+    if bool(scan_id) == (keep_latest is not None):
+        raise typer.BadParameter("Use either --scan-id or --keep-latest.")
+    if not yes:
+        raise typer.BadParameter("Cleanup only deletes saved scan data. Re-run with --yes to confirm.")
+    target_ids = scan_id
+    if keep_latest is not None:
+        target_ids = [scan.id for scan in saved_scans(database)[keep_latest:]]
+    deleted = delete_scans(database, target_ids)
+    console.print(f"Deleted {deleted} saved scan(s). No files on disk were changed.")
+
+
+# Delete every saved scan from FolderTrace's database, never scanned files.
+@app.command(help="Delete every saved scan from FolderTrace's database.")
+def cleanall(
+    yes: bool = typer.Option(False, "--yes", help="Confirm deletion of all saved scan data."),
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+) -> None:
+    if not yes:
+        raise typer.BadParameter("Cleanall only deletes saved scan data. Re-run with --yes to confirm.")
+    deleted = delete_scans(database, [scan.id for scan in saved_scans(database)])
+    console.print(f"Deleted {deleted} saved scan(s). No files on disk were changed.")
 
 
 # Display exact duplicate files from a saved scan.

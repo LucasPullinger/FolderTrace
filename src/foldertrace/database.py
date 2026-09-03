@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import json
 from pathlib import Path
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, inspect, select
+from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, delete, inspect, select
 from sqlalchemy.engine import Engine, URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
@@ -261,3 +261,16 @@ def archives_for_scan(database_path: Path, scan_id: int) -> list[tuple[StoredFil
                 .order_by(StoredFile.path)
             )
         )
+
+
+# Delete saved scans and their dependent metadata, never touching scanned files.
+def delete_scans(database_path: Path, scan_ids: list[int]) -> int:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        existing_ids = session.scalars(select(Scan.id).where(Scan.id.in_(scan_ids))).all()
+        file_ids = select(StoredFile.id).where(StoredFile.scan_id.in_(existing_ids))
+        session.execute(delete(StoredArchive).where(StoredArchive.file_id.in_(file_ids)))
+        session.execute(delete(StoredFile).where(StoredFile.scan_id.in_(existing_ids)))
+        session.execute(delete(Scan).where(Scan.id.in_(existing_ids)))
+        session.commit()
+        return len(existing_ids)
