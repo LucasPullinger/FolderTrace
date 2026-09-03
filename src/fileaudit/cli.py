@@ -4,6 +4,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from fileaudit.database import default_database_path, save_scan
 from fileaudit.scanner import scan_folder
 
 app = typer.Typer(help="Audit local file collections.", no_args_is_help=True)
@@ -28,16 +29,25 @@ def scan(
         resolve_path=True,
         help="Folder to scan recursively.",
     ),
+    database: Path = typer.Option(
+        default_database_path(),
+        "--database",
+        "-d",
+        help="SQLite database file used to store the scan.",
+    ),
 ) -> None:
     records = scan_folder(folder)
     total_size = sum(record.size for record in records)
+    scan_id = save_scan(database, folder, records)
 
     table = Table(title="Scan complete", show_header=False)
     table.add_column("Metric", style="bold cyan")
     table.add_column("Value")
+    table.add_row("Scan ID", str(scan_id))
     table.add_row("Scanned", str(folder))
     table.add_row("Files", str(len(records)))
     table.add_row("Total size", _format_size(total_size))
+    table.add_row("Database", str(database.expanduser()))
     console.print(table)
 
 
