@@ -162,19 +162,6 @@ Changed:      7
 Unchanged:  261
 ```
 
-## Proposed architecture
-
-```
-Python
-│
-├── Scanner             Finds files
-├── Hasher              Calculates SHA-256
-├── Archive Inspector   Reads archive contents
-├── Database            Stores manifests
-├── Analysis            Finds duplicates and changes
-└── CLI                 Provides user commands
-```
-
 ## Technology
 
 - Python 3.11+ — application language and standard-library support for filesystem scanning.
