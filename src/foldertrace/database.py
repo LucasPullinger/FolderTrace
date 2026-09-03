@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from fnmatch import fnmatchcase
 import json
 from pathlib import Path
 
@@ -153,6 +154,40 @@ def files_for_scan(database_path: Path, scan_id: int) -> list[StoredFile]:
             .filter(StoredFile.scan_id == scan_id)
             .order_by(StoredFile.path)
         )
+
+
+# Return files whose names match a text search or shell-style filename pattern.
+def search_files(
+    database_path: Path,
+    scan_id: int,
+    query: str,
+    extension: str | None = None,
+) -> list[StoredFile]:
+    normalized_query = query.casefold()
+    normalized_extension = _normalise_extension(extension)
+    files = files_for_scan(database_path, scan_id)
+
+    return [
+        file
+        for file in files
+        if _filename_matches(file.name, normalized_query)
+        and (normalized_extension is None or file.extension.casefold() == normalized_extension)
+    ]
+
+
+# Match a plain query as a substring, or a glob query as a filename pattern.
+def _filename_matches(filename: str, query: str) -> bool:
+    normalized_name = filename.casefold()
+    if any(character in query for character in "*?["):
+        return fnmatchcase(normalized_name, query)
+    return query in normalized_name
+
+
+# Add a leading dot and normalise a file-extension filter.
+def _normalise_extension(extension: str | None) -> str | None:
+    if extension is None:
+        return None
+    return f".{extension.lstrip('.')}".casefold()
 
 
 # Return the most recently completed scan ID, if the database has any scans.

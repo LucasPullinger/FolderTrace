@@ -8,6 +8,7 @@ from foldertrace.database import (
     files_for_scan,
     save_scan,
     saved_scans,
+    search_files,
 )
 from foldertrace.hashing import hash_records
 from foldertrace.scanner import scan_folder
@@ -114,3 +115,17 @@ def test_compare_scans_categorises_file_changes(tmp_path: Path) -> None:
     assert [file.name for file in comparison.removed] == ["removed.txt"]
     assert [file.name for file in comparison.changed] == ["changed.txt"]
     assert [file.name for file in comparison.unchanged] == ["unchanged.txt"]
+
+
+def test_search_files_matches_text_patterns_and_extensions(tmp_path: Path) -> None:
+    source_folder = tmp_path / "source"
+    source_folder.mkdir()
+    (source_folder / "annual-report.pdf").write_text("report")
+    (source_folder / "notes.txt").write_text("notes")
+    (source_folder / "backup.zip").write_text("archive")
+    database = tmp_path / "foldertrace.db"
+    scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+
+    assert [file.name for file in search_files(database, scan_id, "report")] == ["annual-report.pdf"]
+    assert [file.name for file in search_files(database, scan_id, "*.zip")] == ["backup.zip"]
+    assert [file.name for file in search_files(database, scan_id, "*", "pdf")] == ["annual-report.pdf"]

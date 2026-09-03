@@ -17,6 +17,7 @@ from foldertrace.database import (
     latest_files_for_root,
     save_scan,
     saved_scans,
+    search_files,
 )
 from foldertrace.hashing import hash_records_incrementally
 from foldertrace.scanner import scan_folder, scan_folder_with_stats
@@ -280,6 +281,32 @@ def types(database: Path = typer.Option(default_database_path(), "--database", "
     table.add_column("Total size", justify="right")
     for extension, count, size in file_type_summary(database, selected_scan_id):
         table.add_row(extension or "[no extension]", str(count), _format_size(size))
+    console.print(table)
+
+
+# Find files by name or filename pattern in the latest or selected scan.
+@app.command(help="Find files by name or shell-style filename pattern.")
+def search(
+    query: str = typer.Argument(..., help="Text to find, or a pattern such as '*.zip'."),
+    extension: str | None = typer.Option(None, "--extension", "-e", help="Limit results to an extension, such as pdf or .pdf."),
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+    scan_id: int | None = typer.Option(None, "--scan-id"),
+) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    files = search_files(database, selected_scan_id, query, extension)
+    if not files:
+        console.print(f"No files found for '{query}' in scan {selected_scan_id}.")
+        return
+
+    table = Table(title=f"Search results: scan {selected_scan_id}")
+    table.add_column("Name", style="cyan")
+    table.add_column("Extension")
+    table.add_column("Size", justify="right")
+    table.add_column("Path", overflow="fold")
+    for file in files:
+        table.add_row(file.name, file.extension or "[no extension]", _format_size(file.size), file.path)
     console.print(table)
 
 

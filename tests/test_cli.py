@@ -91,3 +91,17 @@ def test_changes_command_prints_summary_and_details(tmp_path: Path) -> None:
     assert "Scan changes" in result.stdout
     assert "added.txt" in result.stdout
     assert "removed.txt" in result.stdout
+
+
+def test_search_command_prints_matching_files(tmp_path: Path) -> None:
+    (tmp_path / "annual-report.pdf").write_text("report")
+    (tmp_path / "notes.txt").write_text("notes")
+    database = tmp_path / "foldertrace.db"
+    runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
+
+    result = runner.invoke(app, ["search", "report", "--database", str(database)])
+
+    assert result.exit_code == 0
+    assert "Search results" in result.stdout
+    assert "annual-report.pdf" in result.stdout
+    assert "notes.txt" not in result.stdout
