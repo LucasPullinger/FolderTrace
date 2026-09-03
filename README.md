@@ -14,18 +14,35 @@ FolderTrace is designed for general-purpose collections such as downloads, proje
 
 ## Install
 
-FolderTrace requires Python 3.11 or later. Install from a local clone:
+FolderTrace requires Python 3.11 or later.
+
+### Latest development version
+
+Install the latest version directly from GitHub:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install .
+pipx install git+https://github.com/LucasPullinger/FolderTrace.git
 ```
 
-For development, including tests:
+After installation:
 
 ```bash
+foldertrace --help
+foldertrace scan ~/Downloads
+foldertrace summary
+```
+
+## Development setup
+
+To contribute or run FolderTrace from a local clone:
+
+```bash
+git clone https://github.com/LucasPullinger/FolderTrace.git
+cd FolderTrace
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[test]"
+pytest
 ```
 
 ## How it works
@@ -54,9 +71,11 @@ A file record may contain information like this:
   "name": "project-final.zip",
   "size": 34829102,
   "sha256": "a893...",
-  "type": "zip",
-  "modified": "2026-09-03T10:24:00",
-  "archive_files": 142
+  "modified_at": "2026-09-03T10:24:00+01:00",
+  "archive": {
+    "type": "zip",
+    "file_count": 142
+  }
 }
 ```
 
@@ -70,6 +89,10 @@ The first release provides a small, reliable auditing workflow:
 4. Recognise and inspect `.zip`, `.tar`, and `.tar.gz` archives without extracting them.
 5. Persist scan manifests locally in SQLite.
 6. Compare a new scan with an earlier one to report added, removed, changed, and unchanged files.
+7. Identify possible filename-based version groups.
+8. Export saved scans as JSON or CSV.
+9. Reuse hashes from unchanged files to speed up repeated scans.
+10. Exclude unwanted files with glob patterns or a `.foldertraceignore` file.
 
 Archive records can include the number of contained files, total uncompressed size, and contained extensions.
 
@@ -82,7 +105,7 @@ FolderTrace keeps these concepts deliberately separate.
 | Exact duplicate        | Files have the same SHA-256 hash.                                                   | Definitive   |
 | Possible version group | Filenames suggest related releases, such as`tool-v1.0.zip` and `tool-v2.0.zip`. | Interpretive |
 
-Version grouping is a future feature and must never be presented as equivalent to hash-based duplicate detection.
+Version grouping is intentionally conservative: a group is only shown when at least one filename contains a version number or date marker. It must never be presented as equivalent to hash-based duplicate detection.
 
 ## Command-line interface
 
@@ -90,13 +113,33 @@ The application is a CLI:
 
 ```bash
 foldertrace scan ~/Downloads
+foldertrace summary
 foldertrace scans
 foldertrace duplicates
 foldertrace archives
+foldertrace versions
 foldertrace changes --from 1 --to 2
+foldertrace export manifest.json
 ```
 
 Each scan is stored in SQLite at `~/.local/share/foldertrace/foldertrace.db` by default. Use `foldertrace --help` for the complete command reference.
+
+Exclude paths from a scan with repeated glob patterns:
+
+```bash
+foldertrace scan ~/Downloads --exclude "*.tmp" --exclude ".DS_Store"
+```
+
+You can also create a `.foldertraceignore` file in the scanned folder:
+
+```text
+*.tmp
+.DS_Store
+.venv/*
+node_modules/*
+```
+
+Repeated scans reuse SHA-256 hashes for files whose path, size, and modification time are unchanged. FolderTrace displays progress and reports reused versus newly calculated hashes.
 
 An example comparison:
 
@@ -131,14 +174,14 @@ Python
 - **SQLAlchemy** — Python database models and schema creation for the `scans` and `files` tables.
 - **pytest** — automated scanner, CLI, hashing, and database tests.
 
-`hashlib` provides SHA-256 hashing. Planned standard-library integrations include `zipfile` and `tarfile` for archive inspection. FolderTrace runs entirely locally and does not require cloud services.
+`hashlib` provides SHA-256 hashing, while `zipfile` and `tarfile` inspect supported archives. FolderTrace runs entirely locally and does not require cloud services.
 
 ## Roadmap
 
-1. Detect possible version groups.
-2. Export manifests as JSON or CSV.
-3. Optionally add a GUI.
-4. Optionally add specialised plugins, such as a Nexus Mods integration.
+1. Add optional GUI support.
+2. Add specialised plugins, such as a Nexus Mods integration.
+3. Expand archive-format support, including `.7z` and `.rar`.
+4. Improve scan filtering and reporting.
 
 ## Non-goals
 
