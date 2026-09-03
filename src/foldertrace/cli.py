@@ -17,7 +17,7 @@ from foldertrace.database import (
     saved_scans,
 )
 from foldertrace.hashing import hash_records_incrementally
-from foldertrace.scanner import scan_folder
+from foldertrace.scanner import scan_folder, scan_folder_with_stats
 from foldertrace.versions import possible_version_groups
 from foldertrace.database import files_for_scan
 from foldertrace.exporting import export_scan
@@ -50,8 +50,12 @@ def scan(
         "-d",
         help="SQLite database file used to store the scan.",
     ),
+    exclude: list[str] = typer.Option([], "--exclude", help="Glob pattern to exclude; may be repeated."),
 ) -> None:
-    scanned_records = scan_folder(folder)
+    ignore_file = folder / ".foldertraceignore"
+    ignore_patterns = tuple(line.strip() for line in ignore_file.read_text().splitlines() if line.strip() and not line.startswith("#")) if ignore_file.is_file() else ()
+    scan_result = scan_folder_with_stats(folder, tuple(exclude) + ignore_patterns)
+    scanned_records = scan_result.records
     with Progress(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), console=console
     ) as progress:
@@ -71,6 +75,7 @@ def scan(
     table.add_row("Scan ID", str(scan_id))
     table.add_row("Scanned", str(folder))
     table.add_row("Files", str(len(records)))
+    table.add_row("Excluded", str(scan_result.excluded))
     table.add_row("Hashes reused", str(hashing.reused))
     table.add_row("Hashes calculated", str(hashing.calculated))
     table.add_row("Total size", _format_size(total_size))

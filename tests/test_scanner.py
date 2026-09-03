@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from foldertrace.scanner import scan_folder
+from foldertrace.scanner import scan_folder, scan_folder_with_stats
 
 
 def test_scan_folder_recursively_collects_file_metadata(tmp_path: Path) -> None:
@@ -30,3 +30,13 @@ def test_scan_folder_rejects_a_file(tmp_path: Path) -> None:
 
     with pytest.raises(NotADirectoryError):
         scan_folder(source_file)
+
+
+def test_scan_folder_excludes_matching_paths(tmp_path: Path) -> None:
+    (tmp_path / "keep.txt").touch()
+    (tmp_path / "skip.tmp").touch()
+
+    result = scan_folder_with_stats(tmp_path, ("*.tmp",))
+
+    assert [record.name for record in result.records] == ["keep.txt"]
+    assert result.excluded == 1
