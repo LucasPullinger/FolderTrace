@@ -2,6 +2,8 @@
 
 FolderTrace is a local-first application for scanning folders and building a structured, persistent inventory of their contents.
 
+Point FolderTrace at a directory. It creates a persistent inventory of the files, detects exact duplicates, and tells you what changed between scans.
+
 It helps answer practical questions about large file collections:
 
 - What files are in this folder?
@@ -16,12 +18,10 @@ FolderTrace is designed for general-purpose collections such as downloads, proje
 
 FolderTrace requires Python 3.11 or later.
 
-### Latest development version
-
-Install the latest version directly from GitHub:
+### From PyPI (recommended)
 
 ```bash
-pipx install git+https://github.com/LucasPullinger/FolderTrace.git
+pipx install foldertrace
 ```
 
 After installation:
@@ -32,7 +32,15 @@ foldertrace scan ~/Downloads
 foldertrace summary
 ```
 
-## Run from source
+### Latest development version
+
+Install directly from GitHub if you want unreleased changes:
+
+```bash
+pipx install git+https://github.com/LucasPullinger/FolderTrace.git
+```
+
+### Run from source
 
 To run FolderTrace from a local clone:
 
@@ -49,7 +57,7 @@ pytest
 
 FolderTrace recursively scans a selected directory, collects metadata for every file, calculates SHA-256 hashes, optionally inspects supported archives, and stores the resulting manifest locally. It then analyses that manifest to surface duplicates and changes over time.
 
-```text
+```
 Select folder
     ↓
 Scan files and collect metadata
@@ -83,16 +91,16 @@ A file record may contain information like this:
 
 The first release provides a small, reliable auditing workflow:
 
-1. Recursively scan a folder and record each file's path, name, extension, size, and modification date.
-2. Calculate SHA-256 hashes.
-3. Detect and report exact duplicate files.
-4. Recognise and inspect `.zip`, `.tar`, and `.tar.gz` archives without extracting them.
-5. Persist scan manifests locally in SQLite.
-6. Compare a new scan with an earlier one to report added, removed, changed, and unchanged files.
-7. Identify possible filename-based version groups.
-8. Export saved scans as JSON or CSV.
-9. Reuse hashes from unchanged files to speed up repeated scans.
-10. Exclude unwanted files with glob patterns or a `.foldertraceignore` file.
+- Recursively scan a folder and record each file's path, name, extension, size, and modification date.
+- Calculate SHA-256 hashes.
+- Detect and report exact duplicate files.
+- Recognise and inspect `.zip`, `.tar`, and `.tar.gz` archives without extracting them.
+- Persist scan manifests locally in SQLite.
+- Compare a new scan with an earlier one to report added, removed, changed, and unchanged files.
+- Identify possible filename-based version groups.
+- Export saved scans as JSON or CSV.
+- Reuse hashes from unchanged files to speed up repeated scans.
+- Exclude unwanted files with glob patterns or a `.foldertraceignore` file.
 
 Archive records can include the number of contained files, total uncompressed size, and contained extensions.
 
@@ -100,10 +108,10 @@ Archive records can include the number of contained files, total uncompressed si
 
 FolderTrace keeps these concepts deliberately separate.
 
-| Finding                | Meaning                                                                             | Confidence   |
-| ---------------------- | ----------------------------------------------------------------------------------- | ------------ |
-| Exact duplicate        | Files have the same SHA-256 hash.                                                   | Definitive   |
-| Possible version group | Filenames suggest related releases, such as`tool-v1.0.zip` and `tool-v2.0.zip`. | Interpretive |
+| Finding | Meaning | Confidence |
+|---|---|---|
+| Exact duplicate | Files have the same SHA-256 hash. | Definitive |
+| Possible version group | Filenames suggest related releases, such as `tool-v1.0.zip` and `tool-v2.0.zip`. | Interpretive |
 
 Version grouping is intentionally conservative: a group is only shown when at least one filename contains a version number or date marker. It must never be presented as equivalent to hash-based duplicate detection.
 
@@ -132,7 +140,7 @@ foldertrace scan ~/Downloads --exclude "*.tmp" --exclude ".DS_Store"
 
 You can also create a `.foldertraceignore` file in the scanned folder:
 
-```text
+```
 *.tmp
 .DS_Store
 .venv/*
@@ -143,7 +151,7 @@ Repeated scans reuse SHA-256 hashes for files whose path, size, and modification
 
 An example comparison:
 
-```text
+```
 Scan changes: 1 → 2
 
 Added:       12
@@ -154,7 +162,7 @@ Unchanged:  261
 
 ## Proposed architecture
 
-```text
+```
 Python
 │
 ├── Scanner             Finds files
@@ -167,27 +175,25 @@ Python
 
 ## Technology
 
-- **Python 3.11+** — application language and standard-library support for filesystem scanning.
-- **Typer** — command-line interface and argument validation.
-- **Rich** — readable terminal tables and scan summaries.
-- **SQLite** — local, serverless storage for persistent scan manifests.
-- **SQLAlchemy** — Python database models and schema creation for the `scans` and `files` tables.
-- **pytest** — automated scanner, CLI, hashing, and database tests.
+- Python 3.11+ — application language and standard-library support for filesystem scanning.
+- Typer — command-line interface and argument validation.
+- Rich — readable terminal tables and scan summaries.
+- SQLite — local, serverless storage for persistent scan manifests.
+- SQLAlchemy — Python database models and schema creation for the scans and files tables.
+- pytest — automated scanner, CLI, hashing, and database tests.
 
 `hashlib` provides SHA-256 hashing, while `zipfile` and `tarfile` inspect supported archives. FolderTrace runs entirely locally and does not require cloud services.
 
 ## Roadmap
 
-1. Add optional GUI support.
-2. Add specialised plugins, such as a Nexus Mods integration.
-3. Expand archive-format support, including `.7z` and `.rar`.
-4. Improve scan filtering and reporting.
+- Add optional GUI support.
+- Add specialised plugins, such as a Nexus Mods integration.
+- Expand archive-format support, including `.7z` and `.rar`.
+- Improve scan filtering and reporting.
 
 ## Non-goals
 
 FolderTrace is not a file manager, backup program, antivirus product, cloud storage system, archive replacement, or mod manager. It analyses and records a collection so that it can be understood, verified, and compared over time.
-
-> Point FolderTrace at a directory. It creates a persistent inventory of the files, detects exact duplicates, and tells you what changed between scans.
 
 ## License
 
