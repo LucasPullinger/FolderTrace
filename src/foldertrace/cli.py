@@ -12,6 +12,7 @@ from foldertrace.database import (
     default_database_path,
     duplicate_groups,
     delete_scans,
+    file_type_summary,
     latest_scan_id,
     latest_files_for_root,
     save_scan,
@@ -265,6 +266,21 @@ def cleanall(
         raise typer.BadParameter("Cleanall only deletes saved scan data. Re-run with --yes to confirm.")
     deleted = delete_scans(database, [scan.id for scan in saved_scans(database)])
     console.print(f"Deleted {deleted} saved scan(s). No files on disk were changed.")
+
+
+# Show file counts and sizes grouped by extension.
+@app.command(help="Show file counts and sizes grouped by extension.")
+def types(database: Path = typer.Option(default_database_path(), "--database", "-d"), scan_id: int | None = typer.Option(None, "--scan-id")) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    table = Table(title=f"File types: scan {selected_scan_id}")
+    table.add_column("Extension", style="cyan")
+    table.add_column("Files", justify="right")
+    table.add_column("Total size", justify="right")
+    for extension, count, size in file_type_summary(database, selected_scan_id):
+        table.add_row(extension or "[no extension]", str(count), _format_size(size))
+    console.print(table)
 
 
 # Display exact duplicate files from a saved scan.

@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import json
 from pathlib import Path
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, delete, inspect, select
+from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, delete, func, inspect, select
 from sqlalchemy.engine import Engine, URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
@@ -274,3 +274,10 @@ def delete_scans(database_path: Path, scan_ids: list[int]) -> int:
         session.execute(delete(Scan).where(Scan.id.in_(existing_ids)))
         session.commit()
         return len(existing_ids)
+
+
+# Return file counts and total sizes grouped by extension for one scan.
+def file_type_summary(database_path: Path, scan_id: int) -> list[tuple[str, int, int]]:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        return list(session.execute(select(StoredFile.extension, func.count(StoredFile.id), func.sum(StoredFile.size)).where(StoredFile.scan_id == scan_id).group_by(StoredFile.extension).order_by(func.sum(StoredFile.size).desc(), StoredFile.extension)))
