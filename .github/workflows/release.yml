@@ -20,3 +20,16 @@ jobs:
         with:
           name: foldertrace-${{ github.ref_name }}
           path: dist/
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write        
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: foldertrace-${{ github.ref_name }}
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
