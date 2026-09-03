@@ -175,6 +175,20 @@ def search_files(
     ]
 
 
+# Return the largest files in a saved scan, ordered from largest to smallest.
+def largest_files(database_path: Path, scan_id: int, limit: int) -> list[StoredFile]:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        return list(
+            session.scalars(
+                select(StoredFile)
+                .where(StoredFile.scan_id == scan_id)
+                .order_by(StoredFile.size.desc(), StoredFile.path)
+                .limit(limit)
+            )
+        )
+
+
 # Match a plain query as a substring, or a glob query as a filename pattern.
 def _filename_matches(filename: str, query: str) -> bool:
     normalized_name = filename.casefold()

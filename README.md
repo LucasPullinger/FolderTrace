@@ -105,6 +105,7 @@ The first release provides a small, reliable auditing workflow:
 - Exclude unwanted files with glob patterns or a `.foldertraceignore` file.
 - Summarise file counts and total size by extension.
 - Search a saved scan by filename text or pattern, with optional extension filtering.
+- List the largest files in a saved scan to identify disk-space hotspots.
 
 Archive records can include the number of contained files, total uncompressed size, and contained extensions.
 
@@ -130,6 +131,7 @@ foldertrace scans
 foldertrace duplicates
 foldertrace archives
 foldertrace types
+foldertrace largest --limit 20
 foldertrace search "*.zip"
 foldertrace search report --extension pdf
 foldertrace versions

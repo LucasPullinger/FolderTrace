@@ -105,3 +105,17 @@ def test_search_command_prints_matching_files(tmp_path: Path) -> None:
     assert "Search results" in result.stdout
     assert "annual-report.pdf" in result.stdout
     assert "notes.txt" not in result.stdout
+
+
+def test_largest_command_prints_files_in_size_order(tmp_path: Path) -> None:
+    (tmp_path / "small.txt").write_text("a")
+    (tmp_path / "large.txt").write_text("a" * 100)
+    database = tmp_path / "foldertrace.db"
+    runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
+
+    result = runner.invoke(app, ["largest", "--limit", "1", "--database", str(database)])
+
+    assert result.exit_code == 0
+    assert "Largest files" in result.stdout
+    assert "large.txt" in result.stdout
+    assert "small.txt" not in result.stdout

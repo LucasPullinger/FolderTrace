@@ -15,6 +15,7 @@ from foldertrace.database import (
     file_type_summary,
     latest_scan_id,
     latest_files_for_root,
+    largest_files,
     save_scan,
     saved_scans,
     search_files,
@@ -307,6 +308,32 @@ def search(
     table.add_column("Path", overflow="fold")
     for file in files:
         table.add_row(file.name, file.extension or "[no extension]", _format_size(file.size), file.path)
+    console.print(table)
+
+
+# Show the largest files from the latest or selected scan.
+@app.command(help="Show the largest files from the latest or selected scan.")
+def largest(
+    limit: int = typer.Option(10, "--limit", "-n", min=1, help="Maximum number of files to show."),
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+    scan_id: int | None = typer.Option(None, "--scan-id"),
+) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    files = largest_files(database, selected_scan_id, limit)
+    if not files:
+        console.print(f"No files found in scan {selected_scan_id}.")
+        return
+
+    table = Table(title=f"Largest files: scan {selected_scan_id}")
+    table.add_column("Rank", justify="right", style="cyan")
+    table.add_column("Name")
+    table.add_column("Extension")
+    table.add_column("Size", justify="right")
+    table.add_column("Path", overflow="fold")
+    for rank, file in enumerate(files, start=1):
+        table.add_row(str(rank), file.name, file.extension or "[no extension]", _format_size(file.size), file.path)
     console.print(table)
 
 

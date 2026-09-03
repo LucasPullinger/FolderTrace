@@ -6,6 +6,7 @@ from foldertrace.database import (
     create_database,
     duplicate_groups,
     files_for_scan,
+    largest_files,
     save_scan,
     saved_scans,
     search_files,
@@ -129,3 +130,17 @@ def test_search_files_matches_text_patterns_and_extensions(tmp_path: Path) -> No
     assert [file.name for file in search_files(database, scan_id, "report")] == ["annual-report.pdf"]
     assert [file.name for file in search_files(database, scan_id, "*.zip")] == ["backup.zip"]
     assert [file.name for file in search_files(database, scan_id, "*", "pdf")] == ["annual-report.pdf"]
+
+
+def test_largest_files_returns_the_requested_number_in_size_order(tmp_path: Path) -> None:
+    source_folder = tmp_path / "source"
+    source_folder.mkdir()
+    (source_folder / "small.txt").write_text("a")
+    (source_folder / "large.txt").write_text("a" * 100)
+    (source_folder / "medium.txt").write_text("a" * 10)
+    database = tmp_path / "foldertrace.db"
+    scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+
+    files = largest_files(database, scan_id, 2)
+
+    assert [file.name for file in files] == ["large.txt", "medium.txt"]
