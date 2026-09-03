@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import json
 from pathlib import Path
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, create_engine, inspect, select
@@ -9,6 +10,7 @@ from sqlalchemy.engine import Engine, URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from fileaudit.scanner import FileRecord
+from fileaudit.archives import inspect_archive
 
 
 class Base(DeclarativeBase):
@@ -37,6 +39,18 @@ class StoredFile(Base):
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     modified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     sha256: Mapped[str | None] = mapped_column(String(64))
+
+
+class StoredArchive(Base):
+    __tablename__ = "archives"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    file_id: Mapped[int] = mapped_column(ForeignKey("files.id"), nullable=False, unique=True)
+    archive_type: Mapped[str] = mapped_column(String, nullable=False)
+    file_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    uncompressed_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    extensions: Mapped[str] = mapped_column(String, nullable=False)
+    error: Mapped[str | None] = mapped_column(String)
 
 
 # An exact-duplicate group from one saved scan.
@@ -110,6 +124,20 @@ def save_scan(
                 sha256=record.sha256,
             )
             for record in records
+        )
+        session.flush()
+        stored_files = list(session.scalars(select(StoredFile).where(StoredFile.scan_id == scan.id)))
+        session.add_all(
+            StoredArchive(
+                file_id=file.id,
+                archive_type=archive.archive_type,
+                file_count=archive.file_count,
+                uncompressed_size=archive.uncompressed_size,
+                extensions=json.dumps(archive.extensions),
+                error=archive.error,
+            )
+            for file in stored_files
+            if (archive := inspect_archive(Path(file.path))) is not None
         )
         scan.completed_at = datetime.now(UTC)
         session.commit()
@@ -209,3 +237,17 @@ def duplicate_groups(database_path: Path, scan_id: int) -> list[DuplicateGroup]:
         for sha256, files in files_by_hash.items()
         if len(files) > 1
     ]
+
+
+# Return stored archive metadata for one scan.
+def archives_for_scan(database_path: Path, scan_id: int) -> list[tuple[StoredFile, StoredArchive]]:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        return list(
+            session.execute(
+                select(StoredFile, StoredArchive)
+                .join(StoredArchive, StoredArchive.file_id == StoredFile.id)
+                .where(StoredFile.scan_id == scan_id)
+                .order_by(StoredFile.path)
+            )
+        )

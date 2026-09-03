@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.table import Table
 
 from fileaudit.database import (
+    archives_for_scan,
     compare_scans,
     default_database_path,
     duplicate_groups,
@@ -121,6 +122,30 @@ def scans(
             _format_datetime(scan_record.completed_at),
             scan_record.root_path,
         )
+    console.print(table)
+
+
+# List inspected archives from the latest or selected scan.
+@app.command(help="List inspected archives from the latest or selected scan.")
+def archives(
+    database: Path = typer.Option(default_database_path(), "--database", "-d"),
+    scan_id: int | None = typer.Option(None, "--scan-id"),
+) -> None:
+    selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
+    if selected_scan_id is None:
+        raise typer.BadParameter("No completed scans found in this database.")
+    rows = archives_for_scan(database, selected_scan_id)
+    if not rows:
+        console.print(f"No supported archives found in scan {selected_scan_id}.")
+        return
+    table = Table(title=f"Archives: scan {selected_scan_id}")
+    table.add_column("Archive", overflow="fold")
+    table.add_column("Type")
+    table.add_column("Files", justify="right")
+    table.add_column("Uncompressed", justify="right")
+    table.add_column("Status")
+    for file, archive in rows:
+        table.add_row(file.path, archive.archive_type, str(archive.file_count), _format_size(archive.uncompressed_size), archive.error or "OK")
     console.print(table)
 
 
