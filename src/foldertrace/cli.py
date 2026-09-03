@@ -207,7 +207,7 @@ def _print_change_paths(label: str, files: list[object]) -> None:
         return
     console.print(f"\n[bold]{label}[/bold]")
     for file in files:
-        console.print(file.path)
+        console.print(file.path, soft_wrap=True)
 
 
 if __name__ == "__main__":
