@@ -103,6 +103,7 @@ The first release provides a small, reliable auditing workflow:
 - Export saved scans as JSON or CSV.
 - Reuse hashes from unchanged files to speed up repeated scans.
 - Exclude unwanted files with glob patterns or a `.foldertraceignore` file.
+- Summarise file counts and total size by extension.
 
 Archive records can include the number of contained files, total uncompressed size, and contained extensions.
 
@@ -127,6 +128,7 @@ foldertrace summary
 foldertrace scans
 foldertrace duplicates
 foldertrace archives
+foldertrace types
 foldertrace versions
 foldertrace changes --from 1 --to 2
 foldertrace export manifest.json
