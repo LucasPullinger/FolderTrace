@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 import typer
@@ -9,6 +10,7 @@ from fileaudit.database import (
     duplicate_groups,
     latest_scan_id,
     save_scan,
+    saved_scans,
 )
 from fileaudit.hashing import hash_records
 from fileaudit.scanner import scan_folder
@@ -57,6 +59,36 @@ def scan(
     console.print(table)
 
 
+# List saved scans with their IDs, timestamps, and root folders.
+@app.command(help="List saved scans.")
+def scans(
+    database: Path = typer.Option(
+        default_database_path(),
+        "--database",
+        "-d",
+        help="SQLite database file to query.",
+    ),
+) -> None:
+    scan_records = saved_scans(database)
+    if not scan_records:
+        console.print("No saved scans found.")
+        return
+
+    table = Table(title="Saved scans")
+    table.add_column("ID", justify="right", style="cyan")
+    table.add_column("Started")
+    table.add_column("Completed")
+    table.add_column("Folder", overflow="fold")
+    for scan_record in scan_records:
+        table.add_row(
+            str(scan_record.id),
+            _format_datetime(scan_record.started_at),
+            _format_datetime(scan_record.completed_at),
+            scan_record.root_path,
+        )
+    console.print(table)
+
+
 # Display exact duplicate files from a saved scan.
 @app.command(help="Show exact duplicate files from the latest or selected scan.")
 def duplicates(
@@ -100,6 +132,13 @@ def _format_size(size: int) -> str:
             return f"{value:.1f} {unit}" if unit != "B" else f"{size} B"
         value /= 1024
     raise AssertionError("unreachable")
+
+
+# Format an optional database timestamp for terminal output.
+def _format_datetime(value: datetime | None) -> str:
+    if value is None:
+        return "In progress"
+    return value.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
 if __name__ == "__main__":

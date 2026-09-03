@@ -34,3 +34,15 @@ def test_duplicates_command_prints_matching_files(tmp_path: Path) -> None:
     assert "Exact duplicates" in result.stdout
     assert "first.txt" in result.stdout
     assert "second.txt" in result.stdout
+
+
+def test_scans_command_lists_saved_scans(tmp_path: Path) -> None:
+    (tmp_path / "report.txt").write_text("audit")
+    database = tmp_path / "fileaudit.db"
+    runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
+
+    result = runner.invoke(app, ["scans", "--database", str(database)])
+
+    assert result.exit_code == 0
+    assert "Saved scans" in result.stdout
+    assert "Folder" in result.stdout

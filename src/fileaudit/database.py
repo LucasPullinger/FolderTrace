@@ -126,6 +126,13 @@ def latest_scan_id(database_path: Path) -> int | None:
         )
 
 
+# Return saved scans from newest to oldest.
+def saved_scans(database_path: Path) -> list[Scan]:
+    engine = create_database(database_path)
+    with Session(engine) as session:
+        return list(session.scalars(select(Scan).order_by(Scan.id.desc())))
+
+
 # Return exact duplicate groups for one scan, based on matching SHA-256 hashes.
 def duplicate_groups(database_path: Path, scan_id: int) -> list[DuplicateGroup]:
     engine = create_database(database_path)
