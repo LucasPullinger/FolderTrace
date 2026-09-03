@@ -1,6 +1,7 @@
 from dataclasses import dataclass, replace
 from hashlib import sha256
 from pathlib import Path
+from collections.abc import Callable
 
 from foldertrace.scanner import FileRecord
 
@@ -35,7 +36,9 @@ def hash_records(records: list[FileRecord]) -> list[FileRecord]:
 
 
 # Hash files while reusing hashes from unchanged records in the previous scan.
-def hash_records_incrementally(records: list[FileRecord], previous: dict[str, object]) -> HashingResult:
+def hash_records_incrementally(
+    records: list[FileRecord], previous: dict[str, object], progress: Callable[[], None] | None = None
+) -> HashingResult:
     result: list[FileRecord] = []
     reused = 0
     calculated = 0
@@ -50,4 +53,6 @@ def hash_records_incrementally(records: list[FileRecord], previous: dict[str, ob
                 calculated += 1
             except OSError:
                 result.append(record)
+        if progress is not None:
+            progress()
     return HashingResult(result, reused, calculated)

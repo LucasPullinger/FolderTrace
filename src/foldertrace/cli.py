@@ -4,6 +4,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from foldertrace.database import (
     archives_for_scan,
@@ -50,7 +51,16 @@ def scan(
         help="SQLite database file used to store the scan.",
     ),
 ) -> None:
-    hashing = hash_records_incrementally(scan_folder(folder), latest_files_for_root(database, folder))
+    scanned_records = scan_folder(folder)
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), console=console
+    ) as progress:
+        task = progress.add_task("Hashing files", total=len(scanned_records))
+        hashing = hash_records_incrementally(
+            scanned_records,
+            latest_files_for_root(database, folder),
+            lambda: progress.advance(task),
+        )
     records = hashing.records
     total_size = sum(record.size for record in records)
     scan_id = save_scan(database, folder, records)
