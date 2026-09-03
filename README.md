@@ -32,9 +32,9 @@ foldertrace scan ~/Downloads
 foldertrace summary
 ```
 
-## Development setup
+## Run from source
 
-To contribute or run FolderTrace from a local clone:
+To run FolderTrace from a local clone:
 
 ```bash
 git clone https://github.com/LucasPullinger/FolderTrace.git
