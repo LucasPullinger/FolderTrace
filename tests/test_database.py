@@ -51,6 +51,22 @@ def test_duplicate_groups_returns_matching_file_hashes(tmp_path: Path) -> None:
     assert groups[0].duplicate_size == len("same content")
 
 
+def test_duplicate_groups_filters_out_small_files(tmp_path: Path) -> None:
+    source_folder = tmp_path / "source"
+    source_folder.mkdir()
+    (source_folder / "small-one.txt").write_text("x")
+    (source_folder / "small-two.txt").write_text("x")
+    (source_folder / "large-one.txt").write_text("x" * 100)
+    (source_folder / "large-two.txt").write_text("x" * 100)
+    database = tmp_path / "foldertrace.db"
+    scan_id = save_scan(database, source_folder, hash_records(scan_folder(source_folder)))
+
+    groups = duplicate_groups(database, scan_id, minimum_size=10)
+
+    assert len(groups) == 1
+    assert {file.name for file in groups[0].files} == {"large-one.txt", "large-two.txt"}
+
+
 def test_create_database_adds_sha256_to_an_existing_files_table(tmp_path: Path) -> None:
     database = tmp_path / "legacy.db"
     with sqlite3.connect(database) as connection:

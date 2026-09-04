@@ -277,12 +277,18 @@ def _files_match(first: StoredFile, second: StoredFile) -> bool:
 
 
 # Return exact duplicate groups for one scan, based on matching SHA-256 hashes.
-def duplicate_groups(database_path: Path, scan_id: int) -> list[DuplicateGroup]:
+def duplicate_groups(
+    database_path: Path, scan_id: int, minimum_size: int = 0
+) -> list[DuplicateGroup]:
     engine = create_database(database_path)
     with Session(engine) as session:
         rows = session.scalars(
             select(StoredFile)
-            .where(StoredFile.scan_id == scan_id, StoredFile.sha256.is_not(None))
+            .where(
+                StoredFile.scan_id == scan_id,
+                StoredFile.sha256.is_not(None),
+                StoredFile.size >= minimum_size,
+            )
             .order_by(StoredFile.sha256, StoredFile.path)
         ).all()
 

@@ -96,6 +96,7 @@ The first release provides a small, reliable auditing workflow:
 - Recursively scan a folder and record each file's path, name, extension, size, and modification date.
 - Calculate SHA-256 hashes.
 - Detect and report exact duplicate files.
+- Filter duplicate results by minimum file size to focus on reclaimable space.
 - Recognise and inspect `.zip`, `.tar`, and `.tar.gz` archives without extracting them.
 - Persist scan manifests locally in SQLite.
 - Compare a new scan with an earlier one to report added, removed, changed, and unchanged files.
@@ -129,6 +130,7 @@ foldertrace scan ~/Downloads
 foldertrace summary
 foldertrace scans
 foldertrace duplicates
+foldertrace duplicates --min-size 10MB
 foldertrace archives
 foldertrace types
 foldertrace largest --limit 20

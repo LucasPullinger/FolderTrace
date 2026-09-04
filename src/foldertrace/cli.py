@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+import re
 
 import typer
 from rich.console import Console
@@ -351,12 +352,21 @@ def duplicates(
         "--scan-id",
         help="Saved scan ID to inspect. Defaults to the latest completed scan.",
     ),
+    min_size: str | None = typer.Option(
+        None,
+        "--min-size",
+        help="Only show duplicates at least this large, such as 10MB or 500KB.",
+    ),
 ) -> None:
     selected_scan_id = scan_id if scan_id is not None else latest_scan_id(database)
     if selected_scan_id is None:
         raise typer.BadParameter("No completed scans found in this database.")
 
-    groups = duplicate_groups(database, selected_scan_id)
+    try:
+        minimum_size = _parse_size(min_size) if min_size is not None else 0
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="--min-size") from error
+    groups = duplicate_groups(database, selected_scan_id, minimum_size)
     if not groups:
         console.print(f"No exact duplicates found in scan {selected_scan_id}.")
         return
@@ -380,6 +390,17 @@ def _format_size(size: int) -> str:
             return f"{value:.1f} {unit}" if unit != "B" else f"{size} B"
         value /= 1024
     raise AssertionError("unreachable")
+
+
+# Parse a user-friendly byte value such as 10MB, 500KB, or 2GB.
+def _parse_size(value: str) -> int:
+    match = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(B|KB|MB|GB|TB|PB)?", value.strip().upper())
+    if match is None:
+        raise ValueError("Use a size such as 10MB, 500KB, or 2GB.")
+    amount = float(match.group(1))
+    units = {"B": 0, "KB": 1, "MB": 2, "GB": 3, "TB": 4, "PB": 5}
+    unit = match.group(2) or "B"
+    return int(amount * 1024 ** units[unit])
 
 
 # Format an optional database timestamp for terminal output.

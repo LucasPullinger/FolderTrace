@@ -39,6 +39,24 @@ def test_duplicates_command_prints_matching_files(tmp_path: Path) -> None:
     assert "second.txt" in result.stdout
 
 
+def test_duplicates_command_filters_by_minimum_size(tmp_path: Path) -> None:
+    (tmp_path / "small-one.txt").write_text("x")
+    (tmp_path / "small-two.txt").write_text("x")
+    (tmp_path / "large-one.txt").write_text("x" * 100)
+    (tmp_path / "large-two.txt").write_text("x" * 100)
+    database = tmp_path / "foldertrace.db"
+    runner.invoke(app, ["scan", str(tmp_path), "--database", str(database)])
+
+    result = runner.invoke(
+        app,
+        ["duplicates", "--min-size", "10B", "--database", str(database)],
+    )
+
+    assert result.exit_code == 0
+    assert "large-one.txt" in result.stdout
+    assert "small-one.txt" not in result.stdout
+
+
 def test_scans_command_lists_saved_scans(tmp_path: Path) -> None:
     (tmp_path / "report.txt").write_text("audit")
     database = tmp_path / "foldertrace.db"
