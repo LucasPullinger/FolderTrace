@@ -14,7 +14,7 @@ It helps answer practical questions about large file collections:
 - What has changed since a previous scan?
 - Can I recreate or verify this collection later?
 
-FolderTrace is designed for general-purpose collections such as downloads, project archives, photo backups, and datasets. Mod folders are a useful example, but not the product's primary focus.
+FolderTrace is designed for general-purpose collections such as downloads, project archives, photo backups, and datasets.
 
 ## Install
 
@@ -199,7 +199,7 @@ Unchanged:  261
 ## Roadmap
 
 - Add optional GUI support.
-- Add specialised plugins, such as a Nexus Mods integration.
+- Add specialised plugins for further integration.
 - Expand archive-format support, including `.7z` and `.rar`.
 - Improve scan filtering and reporting.
 
